@@ -1,0 +1,96 @@
+services:
+  mongo:
+    image: mongo:6
+    restart: unless-stopped
+    ports: ["27017:27017"]
+    volumes:
+      - mongo_data:/data/db
+    networks: [todo_net]
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports: ["5672:5672", "15672:15672"]
+    networks: [todo_net]
+
+  redis:
+    image: redis:7
+    restart: unless-stopped
+    ports: ["6379:6379"]
+    networks: [todo_net]
+
+  user-service:
+    build: ./user-service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SERVICE_PORT: 3001
+      MONGODB_URI: ${MONGODB_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      NODE_ENV: ${NODE_ENV}
+    depends_on: [mongo, rabbitmq]
+    ports: ["3001:3001"]
+    networks: [todo_net]
+
+  task-service:
+    build: ./task-service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SERVICE_PORT: 3002
+      MONGODB_URI: ${MONGODB_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      REDIS_URL: ${REDIS_URL}
+      NODE_ENV: ${NODE_ENV}
+    depends_on: [mongo, rabbitmq, redis]
+    ports: ["3002:3002"]
+    networks: [todo_net]
+
+  notification-service:
+    build: ./notification-service
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      SERVICE_PORT: 3003
+      MONGODB_URI: ${MONGODB_URI}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      RABBITMQ_URL: ${RABBITMQ_URL}
+      NODE_ENV: ${NODE_ENV}
+      
+    depends_on: [mongo, rabbitmq]
+    ports: ["3003:3003"]
+    networks: [todo_net]
+
+  api-gateway:
+    build: ./api-gateway
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      GATEWAY_PORT: ${GATEWAY_PORT}
+      USER_SERVICE_URL: ${USER_SERVICE_URL}
+      TASK_SERVICE_URL: ${TASK_SERVICE_URL}
+      NOTIF_SERVICE_URL: ${NOTIF_SERVICE_URL}
+      AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS}
+      NODE_ENV: ${NODE_ENV}
+    depends_on: [user-service, task-service, notification-service]
+    ports: ["8080:8080"]
+    networks: [todo_net]
+
+  frontend:
+    build: ./frontend
+    restart: unless-stopped
+    depends_on: [api-gateway]
+    ports: ["8081:80"]
+    networks: [todo_net]
+
+networks:
+  todo_net:
+
+volumes:
+  mongo_data:

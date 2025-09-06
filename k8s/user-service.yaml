@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: todo
+spec:
+  replicas: 2
+  selector: { matchLabels: { app: user-service } }
+  template:
+    metadata: { labels: { app: user-service } }
+    spec:
+      containers:
+      - name: user-service
+        image: ghcr.io/your-org/user-service:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: AUTH_JWT_SECRET
+          valueFrom:
+            secretKeyRef: { name: app-secrets, key: AUTH_JWT_SECRET }
+        - name: MONGODB_URI
+          value: "mongodb://mongo.todo.svc.cluster.local:27017/todo"
+        - name: RABBITMQ_URL
+          value: "amqp://guest:guest@rabbitmq.todo.svc.cluster.local:5672"
+        - name: REDIS_URL
+          value: "redis://redis.todo.svc.cluster.local:6379"
+        - name: SERVICE_PORT
+          value: "3001"
+        ports: [{ containerPort: 3001 }]
+        livenessProbe:
+          httpGet: { path: /healthz, port: 3001 }
+          initialDelaySeconds: 10
+          periodSeconds: 15
+        readinessProbe:
+          httpGet: { path: /healthz, port: 3001 }
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests: { cpu: "100m", memory: "128Mi" }
+          limits: { cpu: "500m", memory: "256Mi" }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: todo
+spec:
+  selector: { app: user-service }
+  ports: [{ port: 3001, targetPort: 3001 }]
