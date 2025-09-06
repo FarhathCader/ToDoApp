@@ -60,16 +60,16 @@ export default function Tasks({ token }) {
       {loading ? <p>Loading…</p> : (
         <ul className="list">
           {tasks.map(t => (
-            <li key={t._id} className="list-item">
+            <li key={t.id} className="list-item">
               <span className={`badge ${t.status === 'DONE' ? 'done' : ''}`}>{t.status}</span>
               <span className="task-title">{t.title}</span>
               <div className="spacer" />
               {t.status === 'DONE' ? (
-                <button className="btn secondary" onClick={() => openTask(t._id)}>Open</button>
+                <button className="btn secondary" onClick={() => openTask(t.id)}>Open</button>
               ) : (
-                <button className="btn secondary" onClick={() => completeTask(t._id)}>Complete</button>
+                <button className="btn secondary" onClick={() => completeTask(t.id)}>Complete</button>
               )}
-              <button className="btn danger" onClick={() => deleteTask(t._id)}>Delete</button>
+              <button className="btn danger" onClick={() => deleteTask(t.id)}>Delete</button>
             </li>
           ))}
 
