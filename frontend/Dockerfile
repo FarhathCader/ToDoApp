@@ -9,4 +9,3 @@ RUN npm run build
 # Serve stage
 FROM nginx:alpine
 COPY --from=build /app/dist /usr/share/nginx/html
-# Simple default nginx config is fine; container listens on :80

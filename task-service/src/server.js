@@ -2,7 +2,6 @@ import express from 'express';
 import dotenv from 'dotenv';
 import helmet from 'helmet';
 import morgan from 'morgan';
-// import mongoose from 'mongoose';
 import pg from "pg";
 import jwt from 'jsonwebtoken';
 import Joi from 'joi';
@@ -16,7 +15,6 @@ const app = express();
 const port = process.env.SERVICE_PORT || 3002;
 
 
-// IMPORTANT: In Docker Compose, prefer service names over localhost.
 const postgresUrl = process.env.POSTGRES_URL || 'postgresql://postgres:postgres@postgres_db:5432/tasksdb';
 const redis = new Redis(process.env.REDIS_URL || 'redis://redis:6379');
 const RABBIT_URL = process.env.RABBITMQ_URL || 'amqp://guest:guest@rabbitmq:5672';
@@ -76,11 +74,9 @@ async function initRabbitWithRetry({ retries = 20, delayMs = 1500 } = {}) {
     try {
       const conn = await amqplib.connect(RABBIT_URL);
       const ch = await conn.createConfirmChannel(); // confirm channel: stronger delivery
-      // Recreate topology if missing (safe to call repeatedly)
       await ch.assertExchange('task.events', 'topic', { durable: true });
       channel = ch;
 
-      // Log connection close/errors so we can recreate if needed
       conn.on('close', () => {
         console.warn('[task] RabbitMQ connection closed; will recreate on next publish');
         channel = undefined;
@@ -117,7 +113,6 @@ async function publishEvent(routingKey, payload) {
   console.log('[task] published', routingKey, { ownerId: payload.ownerId, id: payload.id });
 }
 
-// Convenience wrappers (keeps keys consistent)
 const publishTaskCreated   = (t) => publishEvent('task.created',   t);
 const publishTaskOpened    = (t) => publishEvent('task.opened',    t);
 const publishTaskCompleted = (t) => publishEvent('task.completed', t);
@@ -318,7 +313,6 @@ app.post("/:id/open", auth, async (req, res) => {
     await pgClient.connect();
     console.log("[task] PostgreSQL client connected successfully.");
 
-    // SQL command to create the tasks table if it doesn't exist.
     const createTableQuery = `
             CREATE TABLE IF NOT EXISTS tasks (
                 id SERIAL PRIMARY KEY,
@@ -337,7 +331,6 @@ app.post("/:id/open", auth, async (req, res) => {
     process.exit(1);
   }
 
-  // Try to connect RabbitMQ early; if broker comes up later, publish() will retry.
   await initRabbitWithRetry().catch((err) =>
     console.warn("[task] RabbitMQ not ready yet:", err.message)
   );

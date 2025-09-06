@@ -71,7 +71,6 @@ app.post('/register', async (req, res) => {
     if (existing) return res.status(409).json({ error: 'Email already exists' });
     const passwordHash = await bcrypt.hash(password, 10);
     const user = await User.create({ name, email, passwordHash });
-    // (optional) publish "user.created" event to RabbitMQ here.
     const token = sign(user);
     res.status(201).json({ token, user: { id: user._id, name: user.name, email: user.email } });
   } catch (e) {

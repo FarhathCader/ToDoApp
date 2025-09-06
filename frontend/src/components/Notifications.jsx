@@ -1,4 +1,3 @@
-// src/components/Notifications.jsx
 import React, { useEffect, useState } from 'react'
 
 const API = (path) => `http://localhost:8080${path}`
