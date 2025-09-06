@@ -26,11 +26,6 @@ export default function App() {
           <div className="card"><Notifications token={token} /></div>
         </div>
       )}
-      <footer className="footer">
-        <a href="http://localhost:8080/healthz" target="_blank" rel="noreferrer">Gateway Health</a> ·
-        <a href="http://localhost:8080/metrics" target="_blank" rel="noreferrer">Metrics</a> ·
-        <a href="http://localhost:15672" target="_blank" rel="noreferrer">RabbitMQ UI</a>
-      </footer>
     </div>
   )
 }
