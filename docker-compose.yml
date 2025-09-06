@@ -7,6 +7,18 @@ services:
       - mongo_data:/data/db
     networks: [todo_net]
 
+  postgres_db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports: ["5432:5432"]
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks: [todo_net]
+
   rabbitmq:
     image: rabbitmq:3-management
     restart: unless-stopped
@@ -42,12 +54,12 @@ services:
     env_file: .env
     environment:
       SERVICE_PORT: 3002
-      MONGODB_URI: ${MONGODB_URI}
+      POSTGRES_URL: ${POSTGRES_URL}
       AUTH_JWT_SECRET: ${AUTH_JWT_SECRET}
       RABBITMQ_URL: ${RABBITMQ_URL}
       REDIS_URL: ${REDIS_URL}
       NODE_ENV: ${NODE_ENV}
-    depends_on: [mongo, rabbitmq, redis]
+    depends_on: [postgres_db, rabbitmq, redis]
     ports: ["3002:3002"]
     networks: [todo_net]
 
@@ -94,3 +106,4 @@ networks:
 
 volumes:
   mongo_data:
+  postgres_data:
